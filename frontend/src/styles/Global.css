@@ -1,0 +1,117 @@
+/* global.css */
+html, body {
+    margin: 0px;
+    height: 100%;
+    overflow: hidden; /* Prevents browser scroll */
+}
+  
+body {
+    background-color: #f0f0f0; /* Set the background color */
+}
+
+.container {
+    display: flex; /* Enables flexbox layout */
+    gap: 8px;
+    padding: 8px;
+}
+
+#feature-container {
+    flex: 1;
+    height: 95vh;
+    background-color: #ececec;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+}
+
+@media (max-width: 1000px) {
+    #feature-container {
+        width: auto;
+    }
+}
+
+.box {
+    /* background-color: #f9f9f9; */
+    border-radius: 12px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    background-color: #ffffff;
+}
+
+/* Base font settings */
+body {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    color: #333;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.5;
+    color: #222;
+}
+
+h1 {
+    font-size: 2.5em;
+}
+
+h2 {
+    font-size: 2em;
+}
+
+h3 {
+    font-size: 1.75em;
+}
+
+h4 {
+    font-size: 1.5em;
+}
+
+h5 {
+    font-size: 1.25em;
+}
+
+h6 {
+    font-size: 1em;
+}
+
+/* Paragraphs */
+p {
+    margin: 0 0;
+}
+
+/* Links */
+a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Bold and Italic text */
+strong {
+    font-weight: bold;
+}
+
+em {
+    font-style: italic;
+}
+
+.text-dark {
+    color: #ffffff;
+}
+
+.placeholder {
+    opacity: 50%;
+}
+
+.dark-bg {
+    background-color: #222;
+    color: #000;
+}
