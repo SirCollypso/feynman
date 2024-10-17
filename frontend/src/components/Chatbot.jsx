@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import '../styles/Chatbot.css';
 import '../styles/Global.css';
-import { CHAT_HISTORY, TOPIC_OPTIONS } from '../constants/static_data';
+import { CHAT_HISTORY } from '../constants/static_data.jsx';
+import { TOPIC_OPTIONS } from '../constants/Common.jsx';
 
-const Chatbot = () => {
+const Chatbot = ({ response }) => {
     const [topic, setTopic] = useState('None');
     const [userInput, setUserInput] = useState('');
     const [file, setFile] = useState(null);
     const [chatHistory, setChatHistory] = useState(CHAT_HISTORY);
-    // const [chatHistory, setChatHistory] = useState([]);
     const chatContainerRef = useRef(null);
 
     useEffect(() => {
@@ -16,6 +16,13 @@ const Chatbot = () => {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
     }, [chatHistory]);
+
+    useEffect(() => {
+        if (response && response.code) {
+            // const newMessage = { role: response.role, message: response.message };
+            setUserInput(`\`\`\`${response.code}\`\`\``);
+        }
+    }, [response]);
 
     const handleSubmit = (e) => {
         e.preventDefault(); // Prevent page reload on form submission
@@ -78,7 +85,7 @@ const Chatbot = () => {
                     </label>
                 </div>
         
-                <div className='topic-dropdown'>
+                {/* <div className='topic-dropdown'>
                     <label htmlFor="file-upload"><b>Lecture Note</b></label>
                     <input 
                         id="file-upload"
@@ -89,7 +96,7 @@ const Chatbot = () => {
                         onChange={handleFileInput}
                         name="Select a File"
                     />
-                </div>
+                </div> */}
             </div>
 
             {/* Chat Area */}
@@ -126,7 +133,7 @@ const Chatbot = () => {
                     onChange={(e) => setUserInput(e.target.value)}
                     placeholder="Type your message..."
                 />
-                <button type="submit" className="chatbot-send-button">Send</button>
+                <button type="submit" className={`chatbot-send-button ${userInput ? 'button-active' : ''}`}>Send</button>
             </form>
         </div>
     );

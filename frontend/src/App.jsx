@@ -3,20 +3,14 @@ import Chatbot from './components/Chatbot';
 import CodeEditor from './components/CodeEditor';
 import './styles/global.css';
 
+import { CURR_CHAT } from './constants/static_data.jsx';
+
 function App() {
-  // const [data, setData] = useState(null);
-
-  // useEffect(() => {
-  //   fetch('/api') // This will be proxied to http://localhost:5000/api
-  //     .then((res) => res.json())
-  //     .then((data) => setData(data.message))
-  //     .catch((err) => console.error(err));
-  // }, []);
-
+  const [response, setResponse] = useState(CURR_CHAT);
   return (
     <div className='container'>
-      <Chatbot />
-      <CodeEditor />
+      <Chatbot response={response}/>
+      <CodeEditor setResponse={setResponse}/>
     </div>
   );
 }

@@ -3,12 +3,13 @@
     flex-direction: row;
     justify-content: space-between;
     flex-shrink: 0; /* Prevents shrinking */
+    border: none; /* Removes any existing border */
 }
 
 .chatbot-chat-container {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 16px;
     /* border-width: 1px; */
     /* border-color: rgb(76, 175, 80); */
     /* border-style: solid; */
@@ -71,9 +72,8 @@
     background-color: #45a049;
 }
 
-.dropdown {
-    margin: 0px 8px;
-    padding: 2px 4px;
+.button-active {
+    background-color: #45a049;
 }
 
 .placeholder {
