@@ -31,14 +31,23 @@ const CodeEditor = ({setResponse}) => {
     const updateSelectedCode = () => {
         const editor = editorRef.current;
         if (editor) {
+            const selection = editor.getSelection();
             const selectedText = editor.getModel().getValueInRange(editor.getSelection());
+            const startLineNumber = selection.startLineNumber;
+            const endLineNumber = selection.endLineNumber;
+
+            const code = {
+                text: selectedText,
+                line: startLineNumber < endLineNumber ? `${startLineNumber}-${endLineNumber}` : `${startLineNumber}`
+            };
+
             setSelectedCode(selectedText);
             setResponse({
                 role: 'user',
                 message: `Selected code: ${selectedText}`,
-                code: selectedText,
+                code: code
             });
-            console.log("Selected: ", selectedText);
+            console.log(`Selected: \`\`\`${code.text}\`\`\`\n Lines: ${code.line}`);
         }
     };
 

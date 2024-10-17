@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import '../styles/Chatbot.css';
 import '../styles/Global.css';
-import { CHAT_HISTORY } from '../constants/static_data.jsx';
+import { CHAT_HISTORY } from '../constants/STATIC_DATA.jsx';
 import { TOPIC_OPTIONS } from '../constants/Common.jsx';
 
 const Chatbot = ({ response }) => {
@@ -19,8 +19,10 @@ const Chatbot = ({ response }) => {
 
     useEffect(() => {
         if (response && response.code) {
+            console.log("Response: ", response.code);
             // const newMessage = { role: response.role, message: response.message };
-            setUserInput(`\`\`\`${response.code}\`\`\``);
+            // setUserInput(`\`\`\`${response.code}\`\`\``);
+            setUserInput(`Selected code: ${response.code.text}\n Selected lines: ${response.code.line}`);
         }
     }, [response]);
 
