@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Chatbot from './components/Chatbot';
 import CodeEditor from './components/CodeEditor';
-import './styles/global.css';
+import './styles/Global.css';
 
 function App() {
   // const [data, setData] = useState(null);
