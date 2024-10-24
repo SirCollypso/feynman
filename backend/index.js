@@ -26,23 +26,27 @@ app.post('/chat', async (req, res) => {
     return res.status(400).json({ error: 'thread_id and prompt are required' });
   }
 
-  try {
-    const response = await invokeAssistant(assistant, thread_id, prompt);
+  invokeAssistant(assistant, thread_id, prompt)
+  .then((response) => {
     res.json({ response });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ error: 'An error occurred while processing your request: ' + (error.response ? error.response.data : error.message) });
-  }
+  })
+  .catch((error) => {
+    res.status(500).json({
+      error:
+        'An error occurred while processing your request: ' +
+        (error.response ? error.response.data : error.message),
+    });
+  });
 });
 
 app.post('/thread/create', async (req, res) => {
-  try {
-    const thread = await createThread();
+  createThread()
+  .then((thread) => {
     res.json({ thread_id: thread.id });
-  } catch (error) {
+  })
+  .catch((error) => {
     res.status(500).json({ error: 'Failed to create thread: ' + error });
-  }
+  });
 });
 
 app.post('/thread/delete', async (req, res) => {
@@ -52,12 +56,13 @@ app.post('/thread/delete', async (req, res) => {
     return res.status(400).json({ error: 'thread_id is required' });
   }
 
-  try {
-    await deleteThread(thread_id);
+  deleteThread(thread_id)
+  .then(() => {
     res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete thread: ' +  error});
-  }
+  })
+  .catch((error) => {
+    res.status(500).json({ error: 'Failed to delete thread: ' + error });
+  });
 });
 
 // listen
@@ -106,29 +111,30 @@ function addMessageToThread(thread_id, message) {
   return openai.beta.threads.messages.create(thread_id, message);
 }
 
-async function invokeAssistant(
+function invokeAssistant(
   assistant,
   thread_id,
   prompt,
   model = 'gpt-4o-mini',
   instructions = 'A simple assistant'
 ) {
-  addMessageToThread(thread_id, {
-    role: 'user',
-    content: prompt,
-  });
-
-  const run = await openai.beta.threads.runs.createAndPoll(thread_id, {
-    assistant_id: assistant.id,
-    instructions: prompt,
-    model,
-  });
-
-  if (run.status === 'completed') {
-    let messages = await openai.beta.threads.messages.list(thread_id);
-    const answer = messages.data[0];
-    return answer.content[0].text.value;
-  } else {
-    throw new Error("Couldn't complete the run");
-  }
+  return addMessageToThread(thread_id, { role: 'user', content: prompt })
+    .then(() => {
+      return openai.beta.threads.runs.createAndPoll(thread_id, {
+        assistant_id: assistant.id,
+        instructions: prompt,
+        model,
+      });
+    })
+    .then((run) => {
+      if (run.status === 'completed') {
+        return openai.beta.threads.messages.list(thread_id);
+      } else {
+        throw new Error("Couldn't complete the run");
+      }
+    })
+    .then((messages) => {
+      const answer = messages.data[0];
+      return answer.content[0].text.value;
+    });
 }
