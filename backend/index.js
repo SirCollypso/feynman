@@ -20,23 +20,23 @@ const assistant = await getAssistant(ASSISTANT_NAME);
 // backend endpoints
 
 app.post('/chat', async (req, res) => {
-  const { thread_id, prompt } = req.body;
+  const { thread_id, prompt, highlighted } = req.body;
 
   if (!thread_id || !prompt) {
     return res.status(400).json({ error: 'thread_id and prompt are required' });
   }
 
-  invokeAssistant(assistant, thread_id, prompt)
-  .then((response) => {
-    res.json({ response });
-  })
-  .catch((error) => {
-    res.status(500).json({
-      error:
-        'An error occurred while processing your request: ' +
-        (error.response ? error.response.data : error.message),
+  invokeAssistant(assistant, thread_id, prompt, highlighted)
+    .then((response) => {
+      res.json({ response });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        error:
+          'An error occurred while processing your request: ' +
+          (error.response ? error.response.data : error.message),
+      });
     });
-  });
 });
 
 app.post('/thread/create', async (req, res) => {
@@ -115,9 +115,13 @@ function invokeAssistant(
   assistant,
   thread_id,
   prompt,
+  highlighted,
   model = 'gpt-4o-mini',
   instructions = 'A simple assistant'
 ) {
+
+  // Currently ignoring the 'highlighted' parameter
+  
   return addMessageToThread(thread_id, { role: 'user', content: prompt })
     .then(() => {
       return openai.beta.threads.runs.createAndPoll(thread_id, {
