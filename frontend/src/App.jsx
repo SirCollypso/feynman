@@ -3,7 +3,7 @@ import Chatbot from './components/Chatbot';
 import CodeEditor from './components/CodeEditor';
 import './styles/global.css';
 
-import { CURR_CHAT } from './constants/static_data.jsx';
+import { CURR_CHAT } from './constants/STATIC_DATA.jsx';
 
 function App() {
   const [response, setResponse] = useState(CURR_CHAT);

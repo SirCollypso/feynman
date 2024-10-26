@@ -47,7 +47,7 @@ const CodeEditor = ({setResponse}) => {
                 message: `Selected code: ${selectedText}`,
                 code: code
             });
-            console.log(`Selected: \`\`\`${code.text}\`\`\`\n Lines: ${code.line}`);
+            // console.log(`Selected: \`\`\`${code.text}\`\`\`\n Lines: ${code.line}`);
         }
     };
 

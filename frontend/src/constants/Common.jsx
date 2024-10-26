@@ -21,6 +21,19 @@ export const editor_options = {
     loading: true,
 }; 
 
+export const editor_display_options = {
+  readOnly: true,
+  lineNumbers: "on",
+  minimap: { enabled: false },
+  wordWrap: 'on',
+  scrollBeyondLastLine: false,
+  folding: false,
+  scrollbar: {
+      vertical: 'hidden',
+      horizontal: 'auto'
+  }
+}
+
 export const TOPIC_OPTIONS = [
     // {"value": "hashmap", "title": "Hash Map"},
     // {"value": "bfs", "title": "BFS"},
