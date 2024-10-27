@@ -65,8 +65,22 @@
 
 .chatbot-input {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.chatbot-input-text {
+    display: flex;
     flex-shrink: 0; /* Prevents shrinking */
 }
+
+.chatbot-input-code {
+    display: flex; /* Use flexbox to help the editor expand */
+    flex-direction: column; /* Ensure content stacks vertically */
+    height: auto; /* Let the height grow as needed */
+    overflow: hidden; /* Prevent scrollbars inside the container */
+}
+
 
 .chatbot-send-button:hover {
     background-color: #45a049;
@@ -79,4 +93,10 @@
 .placeholder {
     opacity: 50%;
     align-self: center;
+}
+
+.close-button {
+    color: #FFFFFF;
+    height: 16px;
+    width: 16px;
 }

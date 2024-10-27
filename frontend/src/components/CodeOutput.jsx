@@ -58,7 +58,8 @@ const CodeOutput = ({editorRef}) => {
                     ) : error ? (
                         <p className="error">{error.message}</p>
                     ) : output ? (
-                        <p>{output}</p>
+                        // <p>{output}</p>
+                        <p dangerouslySetInnerHTML={{ __html: output.replace(/\n/g, '<br>') }}></p>
                     ) : (
                         <p className="placeholder"><em>Click "Run Code" to show the output!</em></p>
                     )

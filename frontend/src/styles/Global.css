@@ -96,6 +96,10 @@ p {
     margin: 0 0;
 }
 
+p.code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+}
 
 /* Links */
 a {
@@ -145,4 +149,12 @@ em {
 .dropdown {
     margin: 0px 8px;
     padding: 2px 4px;
+}
+
+.horizontal-line {
+    border: 1;
+    height: 1px;
+    background-color: #45a049;
+    margin: 8px 0;
+    width: auto;
 }
