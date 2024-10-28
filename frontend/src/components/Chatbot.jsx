@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { IoIosCloseCircle } from "react-icons/io";
 import '../styles/Chatbot.css';
 import '../styles/Global.css';
-import { CHAT_HISTORY, TOPIC_OPTIONS } from '../constants/static_data';
+import { CHAT_HISTORY } from '../constants/STATIC_DATA.jsx';
+import { TOPIC_OPTIONS, editor_display_options } from '../constants/Common.jsx';
 
-const Chatbot = () => {
+const Chatbot = ({ response }) => {
     const [topic, setTopic] = useState('None');
     const [userInput, setUserInput] = useState('');
+    const [quotedCode, setQuotedCode] = useState({"text": "", "line": ""});
     const [file, setFile] = useState(null);
     const [chatHistory, setChatHistory] = useState(CHAT_HISTORY);
-    // const [chatHistory, setChatHistory] = useState([]);
     const chatContainerRef = useRef(null);
 
     useEffect(() => {
@@ -17,49 +19,65 @@ const Chatbot = () => {
         }
     }, [chatHistory]);
 
+    useEffect(() => {
+        if (response && response.code) {
+            // console.log("Response: ", response.code);
+            const quotedCode = {
+                "text": response.code.text,
+                "line": response.code.line,
+            };
+            setQuotedCode(quotedCode);
+        }
+    }, [response]);
+
     const handleSubmit = (e) => {
         e.preventDefault(); // Prevent page reload on form submission
 
-        if (userInput.trim()) { // Check if user input is not empty
-            // Append the new message to chatHistory
-            const newMessage = { role: 'user', message: userInput };
-            setChatHistory([...chatHistory, newMessage]);
+        console.log("Quoted code: ", quotedCode);
 
-            // Clear input after submit
+        if (userInput.trim()) { // Check if user input is not empty
+            const newMessage = { role: 'user', message: userInput, code: quotedCode.text ? quotedCode : null };
+            setChatHistory([...chatHistory, newMessage]);
             setUserInput('');
+            setQuotedCode({"text": "", "line": ""});
         }
     };
 
     const handleSetTopic = (e) => {
         e.preventDefault();
-        console.log("Chosen topic: ", e.target.value);
+        // console.log("Chosen topic: ", e.target.value);
         setTopic(e.target.value);
     }
 
-    const handleFileInput = (e) => {
-        const files = e.currentTarget.files
-        if(files)
-        setFile(files[0])
-        // show success message on file upload
-        setIsFileUploaded(true)
-      } 
+    const handleRemoveQuoteCode = (e) => {
+        e.preventDefault();
+        setQuotedCode({"text": "", "line": ""});
+    }
 
-    const handleFileSubmit = async (e) => {
-        e.preventDefault()
+    // const handleFileInput = (e) => {
+    //     const files = e.currentTarget.files
+    //     if(files)
+    //     setFile(files[0])
+    //     // show success message on file upload
+    //     setIsFileUploaded(true)
+    //   } 
+
+    // const handleFileSubmit = async (e) => {
+    //     e.preventDefault()
     
-        const formData = new FormData()
-        if (file) {
-          formData.append('file', file)
-        }
+    //     const formData = new FormData()
+    //     if (file) {
+    //       formData.append('file', file)
+    //     }
     
-        try {
-          const response = await axios.post(`your_api_endpoint`, formData, { headers: { "Content-Type": "multipart/form-data" } })
-          console.log(response);
+    //     try {
+    //       const response = await axios.post(`your_api_endpoint`, formData, { headers: { "Content-Type": "multipart/form-data" } })
+    //       console.log(response);
     
-        } catch (error) {
-          console.error(error);
-        }
-      }
+    //     } catch (error) {
+    //       console.error(error);
+    //     }
+    //   }
 
     return (
         <div id='feature-container' className='box'>
@@ -78,7 +96,7 @@ const Chatbot = () => {
                     </label>
                 </div>
         
-                <div className='topic-dropdown'>
+                {/* <div className='topic-dropdown'>
                     <label htmlFor="file-upload"><b>Lecture Note</b></label>
                     <input 
                         id="file-upload"
@@ -89,23 +107,32 @@ const Chatbot = () => {
                         onChange={handleFileInput}
                         name="Select a File"
                     />
-                </div>
+                </div> */}
             </div>
 
             {/* Chat Area */}
             <div className='chatbot-chat-container box' ref={chatContainerRef}>
                 {chatHistory.length > 0 ? (
                     chatHistory.map((msg, i) => {
-                        if (msg.role === "agent") { // Use triple equals for comparison
+                        if (msg.role === "agent") {
                             return (
-                                <div key={i} className='chatbubble agent'> {/* Added key */}
-                                    <p>{msg.message}</p> {/* Replaced <text> with <p> */}
+                                <div key={i} className='chatbubble agent'>
+                                    <p>{msg.message}</p>
                                 </div>
                             );
                         } else if (msg.role === "user") {
                             return (
-                                <div key={i} className='chatbubble user'> {/* Added key */}
-                                    <p>{msg.message}</p> {/* Replaced <text> with <p> */}
+                                <div key={i} className='chatbubble user'>
+                                    { msg.code && msg.code.text ? (
+                                        (
+                                            <div className='dark-box chatbot-input-code'>
+                                                <p className='code text-dark'style={{color: '#45a049', marginBottom: '8px'}}>Selected lines: {msg.code.line}</p>
+                                                <div className='horizontal-line' />
+                                                <p className='code text-dark' dangerouslySetInnerHTML={{ __html: msg.code.text.replace(/\n/g, '<br>') }}></p>
+                                            </div>
+                                        )
+                                    ) : (null)}
+                                    <p>{msg.message}</p>
                                 </div>
                             );
                         }
@@ -117,17 +144,36 @@ const Chatbot = () => {
             </div>
 
             {/* User Input Area */}
-            <form className="chatbot-input box" onSubmit={handleSubmit}>
-                <input
-                    className="chatbot-input-form"
-                    type="text"
-                    name="user"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    placeholder="Type your message..."
-                />
-                <button type="submit" className="chatbot-send-button">Send</button>
-            </form>
+            <div className='chatbot-input box'>
+                { quotedCode.text ? (
+                    <div className='dark-box chatbot-input-code'>
+                        <div style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                        }}>
+                            <p className='code text-dark' style={{color: '#45a049'}}>Selected lines: {quotedCode.line}</p>
+                            <IoIosCloseCircle className='close-button' onClick={handleRemoveQuoteCode}/>
+                        </div>
+                        <div className='horizontal-line' />
+                        <p className='code text-dark' dangerouslySetInnerHTML={{ __html: quotedCode.text.replace(/\n/g, '<br>') }}></p>
+                    </div>
+                ) : (
+                    null
+                )}
+                <form className="chatbot-input-text" onSubmit={handleSubmit}>
+                    <input
+                        className="chatbot-input-form"
+                        type="text"
+                        name="user"
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        placeholder="Type your message..."
+                    />
+                    <button type="submit" className={`chatbot-send-button ${userInput ? 'button-active' : ''}`}>Send</button>
+                </form>
+            </div>
         </div>
     );
 };
