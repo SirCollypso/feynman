@@ -1,3 +1,5 @@
+export const backend_url = 'http://localhost:5000';
+
 export const editor_options = {
     autoIndent: 'full',
     contextmenu: true,
@@ -15,7 +17,7 @@ export const editor_options = {
     },
     selectOnLineNumbers: true,
     roundedSelection: false,
-    readOnly: false,
+    readOnly: true,
     cursorStyle: 'line',
     automaticLayout: true,
     loading: true,

@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext, useEffect } from 'react';
 import Editor from "@monaco-editor/react";
 import CodeOutput from './CodeOutput.jsx';
 import { LANG_OPTIONS, pythonCode, editor_options } from '../constants/Common.jsx';
+import { ThreadContext } from '../components/ThreadContext.jsx';
 
 import '../styles/CodeEditor.css';
 import '../styles/Global.css';
@@ -12,6 +13,13 @@ const CodeEditor = ({setResponse}) => {
     const [value, setValue] = useState('');
     const [language, setLanguage] = useState('None');
     const [selectedCode, setSelectedCode] = useState('');
+    const { thread_id } = useContext(ThreadContext);
+
+    useEffect(() => {
+        if (thread_id) {
+            setValue(thread_id);
+        }
+    }, [thread_id]);
 
     const handleMountEditor = (editor) => {
         editorRef.current = editor;
@@ -74,12 +82,12 @@ const CodeEditor = ({setResponse}) => {
             
             <div className='code-editor-container'>
                 <Editor
-                    {...editor_options}
+                    options={editor_options}
                     theme='vs-dark'
                     defaultLanguage='python'
-                    defaultValue={pythonCode}
-                    value={value}
-                    onChange={handleEditorChange}
+                    // defaultValue={pythonCode}
+                    defaultValue={value}
+                    // onChange={handleEditorChange}
                     onMount= {handleMountEditor}
                 />
             </div>
