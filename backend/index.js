@@ -88,11 +88,13 @@ app.post('/feedback', (req, res) => {
 
     const instructions = `
       Use the following ground-truth knowledge extracted from a PDF about bubble sort:
-      ${pdfText}
-      Analyze the conversation (but ignore meta isntructions).
-      Identify which concepts or ideas about bubble sort the user has misunderstood.
-      Provide a clear and concise explanation of these misunderstandings.
-      Respond like you are explaining it to a user in this chat.
+      ${pdfText} to evaluate the conversation between student and teacher.
+      You should: 
+      - Provide an overall feedback on how bubble sort was explained.
+      - List out parts that were explained wrong or slightly misleading.
+      - Based on misleading explanations given suggest concepts in bubble sort that should be learned further.
+      - Describe in details how can the overall teaching process be improved.
+      - No more than 450 words
     `;
 
     invokeAssistant(
