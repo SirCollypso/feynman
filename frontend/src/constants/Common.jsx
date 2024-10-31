@@ -53,5 +53,5 @@ export const LANG_OPTIONS = [
 ]
 
 // export const pythonCode = `def greet(name):\n\tprint("Hello, " + name + "!")\n\ngreet("Phil")\n
-export const pythonCode = "# Welcome!\n# The code your student write will appear here!\n";
+export const pythonCode = "# Welcome!\n# The code your student wrote will appear here!\n";
 

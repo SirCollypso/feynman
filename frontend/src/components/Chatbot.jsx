@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
+import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 
 import { IoIosCloseCircle } from "react-icons/io";
@@ -65,7 +66,7 @@ const Chatbot = ({ response }) => {
     const sendMessage = async (msg) => {
         try {
             const loadingMessage = {
-                role: 'loading-agent',
+                role: 'loading',
                 message: null,
                 code: {
                     text: "",
@@ -136,21 +137,6 @@ const Chatbot = ({ response }) => {
         }
     }
 
-    const sendFirstMessage = async () => {
-        try {
-            const initialMessage = {
-                role: 'user',
-                message: "Hello!",
-                code: null
-            };
-
-            console.log("Starting session with initial message:", initialMessage);
-            sendMessage(initialMessage);
-        } catch (error) {
-            console.error("Failed to send the first message:", error);
-        }
-    };
-
     const handleEndSession = async (e) => {
         e.preventDefault();
         setSessionStatus(false);
@@ -158,31 +144,32 @@ const Chatbot = ({ response }) => {
         console.log("Ending session...");
 
         try {
-            const response = axios.post(`${backend_url}/feedback`, { thread_id });
+            const loadingMessage = { role: 'loading', message: null, code: { text: "", lines: "", }};
+            setChatHistory((prevHistory) => [...prevHistory, loadingMessage]);
+
+            const response = await axios.post(`${backend_url}/feedback`, { thread_id });
             const feedback = {
-                role: response.data.response.role,
+                role: "feedback",
                 message: response.data.response.message,
                 code: null,
             };
             
             setChatHistory((prevHistory) => {
                 const updatedHistory = [...prevHistory];
-                updatedHistory[updatedHistory.length - 1] = feedback; // Replace the last item
+                updatedHistory[updatedHistory.length - 1] = feedback;
                 return updatedHistory;
-            });
+            }); 
+
+            await axios.post(`${backend_url}/thread/delete`, { thread_id })
+                .then(() => {
+                    console.log("Thread deleted");
+                })
+                .catch((error) => {
+                    console.error("Failed to delete thread:", error);
+                });
         } catch (error) {
             console.log("Failed to get feedback from the server");
-            console.log("Simulate feedback message...");
         }
-
-
-
-        // await deleteThread().then(() => {
-
-        //     console.log("Thread deleted!");
-        // }).catch((error) => {
-        //     console.error("Failed to delete thread: ", error);
-        // })
     }
 
     return (
@@ -250,14 +237,21 @@ const Chatbot = ({ response }) => {
                                     <p>{msg.message}</p>
                                 </div>
                             );
-                        } else if (msg.role === "loading-agent") {
+                        } else if (msg.role === "loading") {
                             return (
                                 <div key={i} className='chatbubble agent'>
                                     <Loading />
                                 </div>
                             );
+                        } else if (msg.role === "feedback") {
+                            return (
+                                <div key={i} className='chatbubble feedback'>
+                                    <p><b>Review:</b></p>
+                                    <ReactMarkdown>{msg.message}</ReactMarkdown>
+                                </div>
+                            )
                         }
-                        return null; // Add a return statement for cases where msg.role is neither "agent" nor "user"
+                        return null;
                     })
                 ) : (
                     <p className='placeholder'><em>Select a topic and upload your lecture notes!</em></p>
