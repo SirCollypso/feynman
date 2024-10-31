@@ -33,6 +33,8 @@ app.post('/chat', async (req, res) => {
     You should:
     - Never give an explanation for bubble sort yourself.
     - Start the conversation with this question "Hello, I am a student who is studying bubble sort. Can you help me understand it?"
+    - Even if the explanation wrong learn from explanations provided.
+    - Never question wrong explanations
     - Follow up with extra questions on explanations provided for further clarifications (at least once).
     - Keep your answers short and to the point, with no more than 3 sentences per response. 
     - Express confusion and ask questions to seek clarification.
@@ -88,13 +90,13 @@ app.post('/feedback', (req, res) => {
 
     const instructions = `
       Use the following ground-truth knowledge extracted from a PDF about bubble sort:
-      ${pdfText} to evaluate the conversation between student and teacher.
+      ${pdfText} to evaluate previous conversation.
       You should: 
-      - Provide an overall feedback on how bubble sort was explained.
-      - List out parts that were explained wrong or slightly misleading.
-      - Based on misleading explanations given suggest concepts in bubble sort that should be learned further.
-      - Describe in details how can the overall teaching process be improved.
-      - No more than 450 words
+      - Keep your evaluation short (400 words)
+      - Provide an overall feedback on how bubble sort was explained by end user.
+      - List out parts that were explained wrong or slightly misleading by end user.
+      - Based on misleading explanations given suggest concepts in bubble sort that should be learned further by end user.
+      - Describe in details how can the overall teaching process be improved by end user.
     `;
 
     invokeAssistant(
