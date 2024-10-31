@@ -49,7 +49,7 @@ const CodeOutput = ({editorRef}) => {
     return (
         <div className="dark-box code-editor-output-container">
             <div>
-                <button onClick={runCode} className="run-button">Run</button>
+                <button onClick={runCode} className="run-button">Hint</button>
             </div>
             <div className="box">
                 {
@@ -61,7 +61,7 @@ const CodeOutput = ({editorRef}) => {
                         // <p>{output}</p>
                         <p dangerouslySetInnerHTML={{ __html: output.replace(/\n/g, '<br>') }}></p>
                     ) : (
-                        <p className="placeholder"><em>Click "Run Code" to show the output!</em></p>
+                        <p className="placeholder"><em>Quick hint? Run the code to check the result!</em></p>
                     )
                 }
             </div>

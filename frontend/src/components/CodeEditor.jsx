@@ -13,13 +13,17 @@ const CodeEditor = ({setResponse}) => {
     const [value, setValue] = useState('');
     const [language, setLanguage] = useState('None');
     const [selectedCode, setSelectedCode] = useState('');
-    const { thread_id } = useContext(ThreadContext);
+    const { thread_id, displayedCode } = useContext(ThreadContext);
 
     useEffect(() => {
         if (thread_id) {
             setValue(thread_id);
         }
     }, [thread_id]);
+
+    useEffect(() => {
+        setValue(displayedCode);
+    }, [displayedCode]);
 
     const handleMountEditor = (editor) => {
         editorRef.current = editor;
@@ -86,7 +90,7 @@ const CodeEditor = ({setResponse}) => {
                     theme='vs-dark'
                     defaultLanguage='python'
                     // defaultValue={pythonCode}
-                    defaultValue={value}
+                    value={displayedCode ? displayedCode : pythonCode} 
                     // onChange={handleEditorChange}
                     onMount= {handleMountEditor}
                 />

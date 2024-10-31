@@ -8,7 +8,7 @@ import 'dotenv/config';
 const app = express();
 app.use(cors());
 app.use(express.json());
-const port = 5001;
+const port = 5000;
 
 // initialize assistant
 const openai = new OpenAI.OpenAI();
@@ -142,9 +142,10 @@ function invokeAssistant(
     - Next ask why bubble sort repeatedly compares adjacent elements.
     - Next ask how to swap elements in bubble sort.
     - Based on their response, ask 2-3 follow-up questions to understand the core of the algorithm
-    - Start writing a faulty basic code for bubble sort algorithm.
+    - Start writing a faulty basic code for bubble sort algorithm. Do not write any comments.
     - After receiving a feedback make 1-2 more mistakes in code.
     - Correct your code after receiving feedback.
+    - When the corrected code is accepted, end the interaction by thanking user for their help.
     `;  
     return addMessageToThread(thread_id, { role: 'user', content: prompt })
     .then(() => {
@@ -171,8 +172,8 @@ function invokeAssistant(
       let codeText = "";
 
       if (codeBlockMatch) {
-        codeText = "Basic implementation of the bubble sort algorithm."; // Description for code
-        codeLines = codeBlockMatch[1].split('\n').map(line => line.trim());
+        codeText = codeBlockMatch[1];
+        codeLines = null;
       }
 
       // Separate text response from code block if code exists
