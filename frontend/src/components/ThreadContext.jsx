@@ -7,6 +7,7 @@ export const ThreadContext = createContext();
 export const ThreadProvider = ({ children }) => {
     console.log("ThreadProvider touched!");
     const [thread_id, setThreadId] = useState(null);
+    const [displayedCode, setDisplayCode] = useState(null);
 
     const createThread = async () => {
         if (!thread_id) { 
@@ -39,8 +40,13 @@ export const ThreadProvider = ({ children }) => {
         }
     }
 
+    const handleCodeChange = (code) => {
+        setDisplayCode(code);
+        console.log('Code changed in ThreadContext: ', code);
+    };
+
     return (
-        <ThreadContext.Provider value={{ thread_id, createThread, deleteThread }}>
+        <ThreadContext.Provider value={{ thread_id, createThread, deleteThread, handleCodeChange, displayedCode }}>
             {children}
         </ThreadContext.Provider>
     );

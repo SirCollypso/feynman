@@ -15,14 +15,13 @@ const Chatbot = ({ response }) => {
     const [topic, setTopic] = useState('binarysort');
     const [userInput, setUserInput] = useState('');
     const [quotedCode, setQuotedCode] = useState({"text": "", "line": ""});
-    const [file, setFile] = useState(null);
     const [chatHistory, setChatHistory] = useState(CHAT_HISTORY);
     
     const [sessionStatus, setSessionStatus] = useState(false);
     const [sessionEnded, setSessionEnded] = useState(false);
 
     const chatContainerRef = useRef(null);
-    const { thread_id, createThread, deleteThread } = useContext(ThreadContext);
+    const { thread_id, createThread, deleteThread, handleCodeChange } = useContext(ThreadContext);
     
 
     useEffect(() => {
@@ -43,7 +42,7 @@ const Chatbot = ({ response }) => {
     }, [response]);
 
     const resetAll = () => {
-        setUserInput('');
+        setUserInput('Hello!');
         setQuotedCode({"text": "", "line": ""});
         setChatHistory([]);
         setSessionStatus(true);
@@ -67,7 +66,7 @@ const Chatbot = ({ response }) => {
         try {
             const loadingMessage = {
                 role: 'loading-agent',
-                message: null, // Set message as null to trigger <Loading /> component
+                message: null,
                 code: {
                     text: "",
                     lines: "",
@@ -75,26 +74,40 @@ const Chatbot = ({ response }) => {
             };
             setChatHistory((prevHistory) => [...prevHistory, loadingMessage]);
 
+            console.log("Sending message to the server...");
+            console.log(JSON.stringify(msg, null, 2));
+
+            console.log("Check data:")
+            console.log("message: ", msg.message);
+
             const response = await axios.post(`${backend_url}/chat`, {
                 thread_id: thread_id,
-                prompt: msg.message,
+                // message: msg.message,
+                message: { role: 'user', message: msg.message },
                 highlighted: msg.code,
             });
 
+            console.log(JSON.stringify(response.data, null, 2));
+
             const agentMsg = {
-                'role': 'agent',
-                'message': response.data.response,
-                'code': {
-                    'text': "",
-                    'lines': "",
+                role: response.data.response.role,
+                message: response.data.response.message,
+                code: {
+                    text: response.data.response.code.text,
+                    lines: response.data.response.code.lines
                 }
             };
             
             setChatHistory((prevHistory) => {
                 const updatedHistory = [...prevHistory];
-                updatedHistory[updatedHistory.length - 1] = agentMsg; // Replace the last item
+                updatedHistory[updatedHistory.length - 1] = agentMsg;
                 return updatedHistory;
             });
+            
+            if (agentMsg.code.text) {
+                handleCodeChange(agentMsg.code.text);
+            }
+            
         } catch (error) {
             console.error('Failed to get response from the server:', error);
         }
@@ -102,7 +115,6 @@ const Chatbot = ({ response }) => {
     
     const handleSetTopic = (e) => {
         e.preventDefault();
-        // console.log("Chosen topic: ", e.target.value);
         setTopic(e.target.value);
     }
 
@@ -117,48 +129,61 @@ const Chatbot = ({ response }) => {
         const thread_id = await createThread();
         if (thread_id) {
             resetAll();
+            setSessionStatus(true);
             console.log("Thread ID: ", thread_id);
         } else {
             console.error("Failed to create thread!");
         }
     }
 
+    const sendFirstMessage = async () => {
+        try {
+            const initialMessage = {
+                role: 'user',
+                message: "Hello!",
+                code: null
+            };
+
+            console.log("Starting session with initial message:", initialMessage);
+            sendMessage(initialMessage);
+        } catch (error) {
+            console.error("Failed to send the first message:", error);
+        }
+    };
+
     const handleEndSession = async (e) => {
         e.preventDefault();
+        setSessionStatus(false);
+        setSessionEnded(true);
         console.log("Ending session...");
-        await deleteThread().then(() => {
-            setSessionStatus(false);
-            setSessionEnded(true);
-            console.log("Thread deleted!");
-        }).catch((error) => {
-            console.error("Failed to delete thread: ", error);
-        })
+
+        try {
+            const response = axios.post(`${backend_url}/feedback`, { thread_id });
+            const feedback = {
+                role: response.data.response.role,
+                message: response.data.response.message,
+                code: null,
+            };
+            
+            setChatHistory((prevHistory) => {
+                const updatedHistory = [...prevHistory];
+                updatedHistory[updatedHistory.length - 1] = feedback; // Replace the last item
+                return updatedHistory;
+            });
+        } catch (error) {
+            console.log("Failed to get feedback from the server");
+            console.log("Simulate feedback message...");
+        }
+
+
+
+        // await deleteThread().then(() => {
+
+        //     console.log("Thread deleted!");
+        // }).catch((error) => {
+        //     console.error("Failed to delete thread: ", error);
+        // })
     }
-
-    // const handleFileInput = (e) => {
-    //     const files = e.currentTarget.files
-    //     if(files)
-    //     setFile(files[0])
-    //     // show success message on file upload
-    //     setIsFileUploaded(true)
-    //   } 
-
-    // const handleFileSubmit = async (e) => {
-    //     e.preventDefault()
-    
-    //     const formData = new FormData()
-    //     if (file) {
-    //       formData.append('file', file)
-    //     }
-    
-    //     try {
-    //       const response = await axios.post(`your_api_endpoint`, formData, { headers: { "Content-Type": "multipart/form-data" } })
-    //       console.log(response);
-    
-    //     } catch (error) {
-    //       console.error(error);
-    //     }
-    //   }
 
     return (
         <div id='feature-container' className='box'>
@@ -275,8 +300,7 @@ const Chatbot = ({ response }) => {
                 <div className='chatbot-input box'>
                     { sessionEnded ? (
                         <>
-                            <p className='error session-ended'><b>Session ended.</b></p>    
-                            <p className='session-ended'>Click "Start Session" to restart a new session.</p>
+                            <p className='error session-ended'><b>Session ended.</b> Click "Start Session" to restart.</p>
                         </>
                     ) : (
                         <p className='session-ended'>Click "Start Session" to start learning!</p>
