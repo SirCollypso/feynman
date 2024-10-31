@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import PDFParser from 'pdf2json';
 import 'dotenv/config';
-
 
 // initialize server
 const app = express();
@@ -23,9 +25,29 @@ app.post('/chat', async (req, res) => {
     return res.status(400).json({ error: 'thread_id and prompt are required' });
   }
 
-  const prompt = message.message;
-
-  invokeAssistant(assistant, thread_id, prompt, highlighted)
+  invokeAssistant(assistant, thread_id, message.message, `
+    You are a first-year Computer Engineering student learning basic programming concepts
+    You are currently trying to understand and work on solving problems using the bubble sort algorithm 
+    You are having trouble understanding bubble sort algorithm concept 
+    You never try to explain bubble sort.
+    You should:
+    - Never give an explanation for bubble sort yourself.
+    - Start the conversation with this question "Hello, I am a student who is studying bubble sort. Can you help me understand it?"
+    - Follow up with extra questions on explanations provided for further clarifications (at least once).
+    - Keep your answers short and to the point, with no more than 3 sentences per response. 
+    - Express confusion and ask questions to seek clarification.
+    - When providing code, write it within a code block, like: \`\`\`python ... \`\`\`.
+    Conversation Flow:
+    - Start the conversation with this question "Hello, I am a student who is studying bubble sort. Can you help me understand it?"
+    - First ask about how bubble sort algorithm works.
+    - Next ask why bubble sort repeatedly compares adjacent elements.
+    - Next ask how to swap elements in bubble sort.
+    - Based on their response, ask 2-3 follow-up questions to understand the core of the algorithm
+    - Start writing a faulty basic code for bubble sort algorithm. Do not write any comments.
+    - After receiving a feedback make 1-2 more mistakes in code.
+    - Correct your code after receiving feedback.
+    - When the corrected code is accepted, end the interaction by thanking user for their help.`
+  )
     .then((response) => {
       res.json({ 
         response 
@@ -38,6 +60,59 @@ app.post('/chat', async (req, res) => {
           (error.response ? error.response.data : error.message),
       });
     });
+});
+
+app.post('/feedback', (req, res) => {
+  const { thread_id } = req.body;
+
+  if (!thread_id) {
+    return res.status(400).json({ error: 'thread_id is required' });
+  }
+
+  const pdfPath = path.resolve('assets', 'bubble_sort.pdf');
+
+  if (!fs.existsSync(pdfPath)) {
+    return res.status(500).json({ error: `PDF file not found at ${pdfPath}` });
+  }
+
+  const pdfParserInstance = new PDFParser();
+
+  pdfParserInstance.on('pdfParser_dataError', (errData) => {
+    res.status(500).json({
+      error: 'An error occurred while parsing the PDF: ' + errData.parserError,
+    });
+  });
+
+  pdfParserInstance.on('pdfParser_dataReady', (pdfData) => {
+    const pdfText = extractTextFromPDFData(pdfData);
+
+    const instructions = `
+      Use the following ground-truth knowledge extracted from a PDF about bubble sort:
+      ${pdfText}
+      Analyze the conversation (but ignore meta isntructions).
+      Identify which concepts or ideas about bubble sort the user has misunderstood.
+      Provide a clear and concise explanation of these misunderstandings.
+      Respond like you are explaining it to a user in this chat.
+    `;
+
+    invokeAssistant(
+      assistant,
+      thread_id,
+      'Analyze entire chat',
+      instructions
+    )
+      .then((response) => {
+        res.json({ response });
+      })
+      .catch((error) => {
+        res.status(500).json({
+          error:
+            'An error occurred while processing your request: ' + error.message,
+        });
+      });
+  });
+
+  pdfParserInstance.loadPDF(pdfPath);
 });
 
 app.post('/thread/create', async (req, res) => {
@@ -66,13 +141,11 @@ app.post('/thread/delete', async (req, res) => {
   });
 });
 
-// listen
-
 app.listen(port, () => {
   console.log(`Backend server is running at http://localhost:${port}`);
 });
 
-// Assistant helpers functions
+// helper functions
 
 async function getAssistant(
   name,
@@ -116,77 +189,69 @@ function invokeAssistant(
   assistant,
   thread_id,
   prompt,
-  highlighted,
+  instructions = 'A simple assistant',
   model = 'gpt-4o-mini',
-  //instructions = 'A simple assistant'
   temperature = 0.3
 ) {
 
-  // Currently ignoring the 'highlighted' parameter
-  
-  const systemContext =  `
-    You are a first-year Computer Engineering student learning basic programming concepts
-    You are currently trying to understand and work on solving problems using the bubble sort algorithm 
-    You are having trouble understanding bubble sort algorithm concept 
-    You never try to explain bubble sort.
-    You should:
-    - Never give an explanation for bubble sort yourself.
-    - Start the conversation with this question "Hello, I am a student who is studying bubble sort. Can you help me understand it?"
-    - Follow up with extra questions on explanations provided for further clarifications (at least once).
-    - Keep your answers short and to the point, with no more than 3 sentences per response. 
-    - Express confusion and ask questions to seek clarification.
-    - When providing code, write it within a code block, like: \`\`\`python ... \`\`\`.
-    Conversation Flow:
-    - Start the conversation with this question "Hello, I am a student who is studying bubble sort. Can you help me understand it?"
-    - First ask about how bubble sort algorithm works.
-    - Next ask why bubble sort repeatedly compares adjacent elements.
-    - Next ask how to swap elements in bubble sort.
-    - Based on their response, ask 2-3 follow-up questions to understand the core of the algorithm
-    - Start writing a faulty basic code for bubble sort algorithm. Do not write any comments.
-    - After receiving a feedback make 1-2 more mistakes in code.
-    - Correct your code after receiving feedback.
-    - When the corrected code is accepted, end the interaction by thanking user for their help.
-    `;  
-    return addMessageToThread(thread_id, { role: 'user', content: prompt })
-    .then(() => {
-      return openai.beta.threads.runs.createAndPoll(thread_id, {
-        assistant_id: assistant.id,
-        instructions: systemContext,
-        model,
-      });
-    })
-    .then((run) => {
-      if (run.status === 'completed') {
-        return openai.beta.threads.messages.list(thread_id);
-      } else {
-        throw new Error("Couldn't complete the run");
-      }
-    })
-    .then((messages) => {
-      const answer = messages.data[0].content[0].text.value;
-
-      
-      // Extract the code block using a regular expression if it exists
-      const codeBlockMatch = answer.match(/```(?:\w+)?\n([\s\S]*?)```/);
-      let codeLines = [];
-      let codeText = "";
-
-      if (codeBlockMatch) {
-        codeText = codeBlockMatch[1];
-        codeLines = null;
-      }
-
-      // Separate text response from code block if code exists
-      const messageWithoutCode = codeBlockMatch ? answer.replace(/```[\s\S]*```/, "").trim() : answer;
-
-      // Return the response in the required format
-      return {
-        role: 'agent',
-        message: messageWithoutCode, // Text part of the response
-        code: {
-          text: codeText,
-          lines: codeLines
-        }
-      };
+  return addMessageToThread(thread_id, { role: 'user', content: prompt })
+  .then(() => {
+    return openai.beta.threads.runs.createAndPoll(thread_id, {
+      assistant_id: assistant.id,
+      instructions: instructions,
+      model,
     });
+  })
+  .then((run) => {
+    if (run.status === 'completed') {
+      return openai.beta.threads.messages.list(thread_id);
+    } else {
+      throw new Error("Couldn't complete the run");
+    }
+  })
+  .then((messages) => {
+    const answer = messages.data[0].content[0].text.value;
+
+    // Extract the code block using a regular expression if it exists
+    const codeBlockMatch = answer.match(/```(?:\w+)?\n([\s\S]*?)```/);
+    let codeLines = [];
+    let codeText = "";
+
+    if (codeBlockMatch) {
+      codeText = codeBlockMatch[1];
+      codeLines = null;
+    }
+
+    // Separate text response from code block if code exists
+    const messageWithoutCode = codeBlockMatch ? answer.replace(/```[\s\S]*```/, "").trim() : answer;
+
+    // Return the response in the required format
+    return {
+      role: 'agent',
+      message: messageWithoutCode, // Text part of the response
+      code: {
+        text: codeText,
+        lines: codeLines
+      }
+    };
+  });
+}
+
+function extractTextFromPDFData(pdfData) {
+  let pdfText = '';
+
+  if (pdfData && pdfData.Pages) {
+    pdfData.Pages.forEach((page) => {
+      page.Texts.forEach((text) => {
+        text.R.forEach((run) => {
+          const decodedText = decodeURIComponent(run.T);
+          pdfText += decodedText + ' ';
+        });
+        pdfText += '\n';
+      });
+      pdfText += '\n';
+    });
+  }
+
+  return pdfText.trim();
 }
